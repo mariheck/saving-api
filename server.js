@@ -1,5 +1,8 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 const app = express();
 app.use(express.json());
@@ -240,6 +243,18 @@ let db = {
     ]
 };
 
+//====================================================
+// NODEMAILER SETTING
+//====================================================
+
+const transporter = nodemailer.createTransport({
+    service: process.env.SERVICE,
+    auth: {
+        user: process.env.ACCOUNT,
+        pass: process.env.PASS
+    }
+});
+
 // ======================================================
 // ROUTES
 // ======================================================
@@ -260,6 +275,36 @@ app.post('/login', (req, res) => {
     } else {
         return res.status(400).json('Identifiants incorrects.');
     }
+});
+
+// =================
+// NODEMAILER
+// =================
+
+app.post('/contact', (req, res) => {
+    const { name, email, phone, message } = req.body;
+
+    const mailContent = `
+    <p>
+    ${name} </br> 
+    ${email} </br> 
+    ${phone} </br> 
+    ${message}</p>`;
+
+    const mailOptions = {
+        from: process.env.ACCOUNT,
+        to: process.env.ACCOUNT,
+        subject: 'Saving - Nouveau Message',
+        html: mailContent
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+            res.status(400).json(err);
+        } else {
+            res.json(info);
+        }
+    });
 });
 
 // =================
@@ -446,6 +491,6 @@ app.delete('/videos/:videoId', (req, res) => {
 // APP RUNNING
 // ======================================================
 
-app.listen(3000, () => {
-    console.log('App is running on port 3000.');
+app.listen(process.env.PORT, () => {
+    console.log(`App is running on port ${process.env.PORT}.`);
 });
