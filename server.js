@@ -10,6 +10,7 @@ app.use(cors());
 // ======================================================
 
 let db = {
+    admin: { pseudo: 'Admin', password: 'mdp123' },
     photosCollections: [
         { id: 1, name: 'Portrait', tag: 'portrait' },
         { id: 2, name: 'Street', tag: 'street' },
@@ -242,6 +243,24 @@ let db = {
 // ======================================================
 // ROUTES
 // ======================================================
+
+// =================
+// ADMIN
+// =================
+
+app.post('/login', (req, res) => {
+    const { pseudo, password } = req.body;
+
+    if (!pseudo || !password) {
+        return res.status(400).json('Identifiants incorrects.');
+    }
+
+    if (pseudo === db.admin.pseudo && password === db.admin.password) {
+        return res.json({ accessGranted: true, pseudo: db.admin.pseudo });
+    } else {
+        return res.status(400).json('Identifiants incorrects.');
+    }
+});
 
 // =================
 // COLLECTIONS
