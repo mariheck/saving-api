@@ -267,13 +267,13 @@ app.post('/login', (req, res) => {
     const { pseudo, password } = req.body;
 
     if (!pseudo || !password) {
-        return res.status(400).json('Identifiants incorrects.');
+        return res.status(400).json('Wrong credentials.');
     }
 
     if (pseudo === db.admin.pseudo && password === db.admin.password) {
-        return res.json({ accessGranted: true, pseudo: db.admin.pseudo });
+        return res.json({ pseudo: db.admin.pseudo });
     } else {
-        return res.status(400).json('Identifiants incorrects.');
+        return res.status(400).json('Wrong credentials.');
     }
 });
 
