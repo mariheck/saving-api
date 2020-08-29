@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
+const _ = require('lodash');
 const PhotoCollection = require('../models/photocollection');
 const VideoCollection = require('../models/videocollection');
 
@@ -40,10 +41,10 @@ router.post('/', (req, res) => {
             ? VideoCollection
             : null;
 
-    const { name, tag } = req.body;
+    const { entry } = req.body;
     const newCollection = {
-        name,
-        tag
+        name: _.startCase(_.toLower(_.trim(entry))),
+        tag: _.kebabCase(_.toLower(_.trim(entry)))
     };
 
     Collection.create(newCollection, err => {
@@ -88,10 +89,10 @@ router.put('/:collectionTag', (req, res) => {
             ? VideoCollection
             : null;
 
-    const { name, tag } = req.body;
+    const { entry } = req.body;
     const updatedCollection = {
-        name,
-        tag
+        name: _.startCase(_.toLower(_.trim(entry))),
+        tag: _.kebabCase(_.toLower(_.trim(entry)))
     };
 
     Collection.findOneAndUpdate(
