@@ -23,7 +23,7 @@ router.get('/', (req, res) => {
 
     File.find({}, (err, files) => {
         if (err) {
-            res.status(400).json(`Couldn't fetch files from the database.`);
+            res.status(400).json('Error fetching files from the database.');
         } else {
             res.json(files);
         }
@@ -55,47 +55,58 @@ router.post('/', middleware.isLoggedIn, (req, res) => {
         collections: []
     });
 
-    Collection.find({ tag: { $in: fileCollections } }, (err, collections) => {
-        if (err) {
-            res.status(400).json("Couldn't find the requested collections.");
-        } else {
-            const fileCollectionId = collections.map(
-                collection => collection._id
-            );
-            newFile.collections = [...fileCollectionId];
+    Collection.find(
+        { tag: { $in: fileCollections } },
+        (findError, collections) => {
+            if (findError) {
+                res.status(400).json(
+                    'Error finding the requested collections.'
+                );
+            } else if (collections) {
+                const fileCollectionId = collections.map(
+                    collection => collection._id
+                );
+                newFile.collections = [...fileCollectionId];
 
-            File.create(newFile, (err, file) => {
-                if (err) {
-                    res.status(400).json(
-                        "Coudln't save the file in the database."
-                    );
-                } else {
-                    file.collections.forEach(fileCollectionId => {
-                        Collection.findById(
-                            fileCollectionId,
-                            (error, collection) => {
-                                if (error) {
-                                    res.status(400).json(
-                                        "Couldn't find the requested collection."
-                                    );
-                                } else {
-                                    collection[typeOfFile].push(file._id);
-                                    collection.save(error => {
-                                        if (error)
-                                            res.status(400).json(
-                                                "Coudln't update the collection with new file id."
-                                            );
-                                    });
-                                }
-                            }
+                File.create(newFile, (createError, file) => {
+                    if (createError) {
+                        res.status(400).json(
+                            'Error saving the file in the database.'
                         );
-                    });
+                    } else {
+                        file.collections.forEach(fileCollectionId => {
+                            Collection.findById(
+                                fileCollectionId,
+                                (findByIdError, collection) => {
+                                    if (findByIdError) {
+                                        res.status(400).json(
+                                            "Couldn't find the requested collection."
+                                        );
+                                    } else if (collection) {
+                                        collection[typeOfFile].push(file._id);
+                                        collection.save(error => {
+                                            if (error)
+                                                res.status(400).json(
+                                                    "Coudln't update the collection with new file id."
+                                                );
+                                        });
+                                    } else {
+                                        res.status(400).json(
+                                            "Requested collection doesn't exist."
+                                        );
+                                    }
+                                }
+                            );
+                        });
 
-                    res.status(200).json('File saved in database.');
-                }
-            });
+                        res.status(200).json('File saved in database.');
+                    }
+                });
+            } else {
+                res.status(400).json("Requested collections don't exist.");
+            }
         }
-    });
+    );
 });
 
 // SHOW
@@ -111,9 +122,11 @@ router.get('/:fileId', (req, res) => {
 
     File.findById(fileId, (err, file) => {
         if (err) {
-            res.status(400).status(`Couldn't find the requested file.`);
-        } else {
+            res.status(400).status('Error fetching the requested file.');
+        } else if (file) {
             res.json(file);
+        } else {
+            res.status(400).status("Requested file doesn't exist.");
         }
     });
 });
@@ -143,71 +156,117 @@ router.put('/:fileId', middleware.isLoggedIn, (req, res) => {
         collections: []
     };
 
-    Collection.find({ tag: { $in: fileCollections } }, (err, collections) => {
-        if (err) {
-            res.status(400).json("Couldn't find the requested collections.");
-        } else {
-            const fileCollectionsId = collections.map(
-                collection => collection._id
-            );
-            updatedFile.collections = [...fileCollectionsId];
+    Collection.find(
+        { tag: { $in: fileCollections } },
+        (findError, collections) => {
+            if (findError) {
+                res.status(400).json(
+                    "Couldn't find the requested collections."
+                );
+            } else if (collections) {
+                const fileCollectionsId = collections.map(
+                    collection => collection._id
+                );
+                updatedFile.collections = [...fileCollectionsId];
 
-            File.findByIdAndUpdate(fileId, updatedFile, (err, file) => {
-                if (err) {
-                    res.status(400).json(
-                        "Coudln't save the file in the database."
-                    );
-                } else {
-                    Collection.find({}, (error, allCollections) => {
-                        if (error) {
-                            res.status(400).status(
-                                "Couldn't find the requested collections."
+                File.findByIdAndUpdate(
+                    fileId,
+                    updatedFile,
+                    (updateError, file) => {
+                        if (updateError) {
+                            res.status(400).json(
+                                "Coudln't save the file in the database."
                             );
                         } else {
-                            allCollections.forEach(collection => {
-                                if (
-                                    fileCollections.includes(collection.tag) &&
-                                    !collection[typeOfFile].includes(file._id)
-                                ) {
-                                    collection[typeOfFile].push(file._id);
-                                    collection.save(error => {
-                                        if (error)
-                                            res.status(400).json(
-                                                "Coudln't update the collection with new file id."
+                            if (file) {
+                                Collection.find(
+                                    {},
+                                    (findAllError, allCollections) => {
+                                        if (findAllError) {
+                                            res.status(400).status(
+                                                "Couldn't find the requested collections."
                                             );
-                                    });
-                                } else if (
-                                    !fileCollections.includes(collection.tag) &&
-                                    collection[typeOfFile].includes(file._id)
-                                ) {
-                                    const newCollectionsFiles = collection[
-                                        typeOfFile
-                                    ].filter(
-                                        collectionFile =>
-                                            collectionFile.toString() !==
-                                            file._id.toString()
-                                    );
+                                        } else if (allCollections) {
+                                            allCollections.forEach(
+                                                collection => {
+                                                    if (
+                                                        fileCollections.includes(
+                                                            collection.tag
+                                                        ) &&
+                                                        !collection[
+                                                            typeOfFile
+                                                        ].includes(file._id)
+                                                    ) {
+                                                        collection[
+                                                            typeOfFile
+                                                        ].push(file._id);
+                                                        collection.save(
+                                                            saveError => {
+                                                                if (saveError)
+                                                                    res.status(
+                                                                        400
+                                                                    ).json(
+                                                                        "Coudln't update the collection with new file id."
+                                                                    );
+                                                            }
+                                                        );
+                                                    } else if (
+                                                        !fileCollections.includes(
+                                                            collection.tag
+                                                        ) &&
+                                                        collection[
+                                                            typeOfFile
+                                                        ].includes(file._id)
+                                                    ) {
+                                                        const newCollectionsFiles = collection[
+                                                            typeOfFile
+                                                        ].filter(
+                                                            collectionFile =>
+                                                                collectionFile.toString() !==
+                                                                file._id.toString()
+                                                        );
 
-                                    collection[typeOfFile] = [
-                                        ...newCollectionsFiles
-                                    ];
+                                                        collection[
+                                                            typeOfFile
+                                                        ] = [
+                                                            ...newCollectionsFiles
+                                                        ];
 
-                                    collection.save(error => {
-                                        if (error)
-                                            res.status(400).json(
-                                                "Coudln't update the collection with new file id."
+                                                        collection.save(
+                                                            saveError => {
+                                                                if (saveError)
+                                                                    res.status(
+                                                                        400
+                                                                    ).json(
+                                                                        "Coudln't update the collection with new file id."
+                                                                    );
+                                                            }
+                                                        );
+                                                    }
+                                                }
                                             );
-                                    });
-                                }
-                            });
+                                        } else {
+                                            res.status(400).json(
+                                                'No collections to find.'
+                                            );
+                                        }
+                                    }
+                                );
+
+                                res.status(200).json('File saved in database.');
+                            } else {
+                                res.status(400).json(
+                                    "Requested file doesn't exist."
+                                );
+                            }
                         }
-                    });
-
-                    res.status(200).json('File saved in database.');
-                }
-            });
+                    }
+                );
+            } else {
+                res.status(400).json("Requested collections don't exist.");
+            }
         }
-    });
+    );
 });
 
 // DESTROY
@@ -228,15 +287,15 @@ router.delete('/:fileId', middleware.isLoggedIn, (req, res) => {
             ? VideoCollection
             : null;
 
-    File.findByIdAndRemove(fileId, (err, file) => {
-        if (err) {
+    File.findByIdAndRemove(fileId, (removeError, file) => {
+        if (removeError) {
             res.status(400).json(`Coudln't remove the file from the database.`);
-        } else {
+        } else if (file) {
             file.collections.forEach(fileCollection => {
-                Collection.findById(fileCollection, (error, collection) => {
-                    if (error) {
+                Collection.findById(fileCollection, (findError, collection) => {
+                    if (findError) {
                         res.status(400).json("Couldn't find the collection.");
-                    } else {
+                    } else if (collection) {
                         const newCollectionsFiles = collection[
                             typeOfFile
                         ].filter(
@@ -252,11 +311,17 @@ router.delete('/:fileId', middleware.isLoggedIn, (req, res) => {
                                     "Coudln't update the collection."
                                 );
                         });
+                    } else {
+                        res.status(400).json(
+                            "Requested collection doesn't exist."
+                        );
                     }
                 });
             });
 
-            res.status(200).json(`File removed from database.`);
+            res.status(200).json('File removed from database.');
+        } else {
+            res.status(400).json("Requested file doesn't exist.");
         }
     });
 });

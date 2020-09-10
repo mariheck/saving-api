@@ -23,10 +23,14 @@ router.get('/', (req, res) => {
     Collection.find({}, (err, collections) => {
         if (err) {
             res.status(400).json(
-                `Couldn't fetch  ${typeOfFile}s from the database.`
+                'Error fetching collections from the database.'
             );
         } else {
-            res.json(collections);
+            if (collections) {
+                res.json(collections);
+            } else {
+                res.status(400).json('No collections in the database.');
+            }
         }
     });
 });
@@ -52,7 +56,7 @@ router.post('/', middleware.isLoggedIn, (req, res) => {
     Collection.create(newCollection, err => {
         if (err) {
             res.status(400).json(
-                "Coudln't save the  collection in the database."
+                'Error creating the  collection in the database.'
             );
         } else {
             res.status(200).json('Collection saved in database.');
@@ -73,9 +77,13 @@ router.get('/:collectionTag', (req, res) => {
 
     Collection.findOne({ tag: collectionTag }, (err, collection) => {
         if (err) {
-            res.status(400).status("Couldn't find the requested collection.");
+            res.status(400).json('Error fetching the requested collection.');
         } else {
-            res.json(collection);
+            if (collection) {
+                res.json(collection);
+            } else {
+                res.status(400).json("Collection doesn't exist.");
+            }
         }
     });
 });
@@ -101,13 +109,15 @@ router.put('/:collectionTag', middleware.isLoggedIn, (req, res) => {
     Collection.findOneAndUpdate(
         { tag: collectionTag },
         updatedCollection,
-        err => {
+        (err, collection) => {
             if (err) {
-                res.status(400).json(
-                    "Coudln't save the collection in the database."
-                );
+                res.status(400).json('Error updating the collection.');
             } else {
-                res.status(200).json('Collection saved in database.');
+                if (collection) {
+                    res.status(200).json('Collection saved in database.');
+                } else {
+                    res.status(400).json("Requested collection doesn't exist.");
+                }
             }
         }
     );
@@ -124,26 +134,33 @@ router.delete('/:collectionTag', middleware.isLoggedIn, (req, res) => {
             ? VideoCollection
             : null;
 
-    Collection.findOne({ tag: collectionTag }, (err, collection) => {
-        if (err) {
-            res.status(400).status("Couldn't find the requested collection.");
+    Collection.findOne({ tag: collectionTag }, (findError, collection) => {
+        if (findError) {
+            res.status(400).json('Error fetching the requested collection.');
         } else {
-            if (collection[typeOfFile].length) {
-                res.status(400).json(
-                    "Coudln't remove the collection from the database : collection not empty."
-                );
+            if (collection) {
+                if (collection[typeOfFile].length) {
+                    res.status(400).json(
+                        "Coudln't remove the collection from the database : collection not empty."
+                    );
+                } else {
+                    Collection.findOneAndDelete(
+                        { tag: collectionTag },
+                        deleteError => {
+                            if (deleteError) {
+                                res.status(400).json(
+                                    "Coudln't remove the collection from the database."
+                                );
+                            } else {
+                                res.status(200).json(
+                                    'Collection removed from database.'
+                                );
+                            }
+                        }
+                    );
+                }
             } else {
-                Collection.findOneAndDelete({ tag: collectionTag }, err => {
-                    if (err) {
-                        res.status(400).json(
-                            "Coudln't remove the collection from the database."
-                        );
-                    } else {
-                        res.status(200).json(
-                            'Collection removed from database.'
-                        );
-                    }
-                });
+                res.status(400).json("Requested collection doesn't exist.");
             }
         }
     });
