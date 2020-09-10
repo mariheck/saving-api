@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const nodemailer = require('nodemailer');
-const passport = require('passport');
+const middleware = require('../middleware');
 const Admin = require('../models/admin');
 
 // ======================================================
@@ -79,13 +79,8 @@ router.post('/login', (req, res) => {
     });
 
     req.login(admin, err => {
-        if (err) {
-            res.status(400).json('Wrong credentials.');
-        } else {
-            passport.authenticate('local')(req, res, () => {
-                res.json(req.user.username);
-            });
-        }
+        if (err) return res.status(400).json('Wrong credentials.');
+        return res.json(req.user.username);
     });
 });
 
@@ -94,7 +89,7 @@ router.get('/logout', (req, res) => {
     res.json('Successfully logged out.');
 });
 
-router.put('/password', (req, res) => {
+router.put('/password', middleware.isLoggedIn, (req, res) => {
     const {
         username,
         oldPassword,
@@ -103,7 +98,6 @@ router.put('/password', (req, res) => {
     } = req.body;
 
     if (newPassword !== passwordConfirmation) {
-        console.log('newPassword !== passwordConfirmation');
         return res
             .status(400)
             .json('Password confirmation different from new password.');
@@ -111,18 +105,24 @@ router.put('/password', (req, res) => {
 
     Admin.findByUsername(username, (err, admin) => {
         if (err) {
-            res.status(400).status("Couldn't find the requested user.");
+            res.status(400).json("Couldn't find the requested user.");
         } else {
             if (admin) {
-                admin.changePassword(oldPassword, newPassword, error => {
-                    if (error) {
-                        res.status(400).status("Couldn't update the password.");
-                    } else {
-                        res.json('Password updated successfully.');
+                admin.changePassword(
+                    oldPassword,
+                    newPassword,
+                    (error, authAdmin, passwordErr) => {
+                        if (error || passwordErr) {
+                            res.status(400).json(
+                                "Couldn't update the password."
+                            );
+                        } else {
+                            res.json('Password updated successfully.');
+                        }
                     }
-                });
+                );
             } else {
-                res.status(400).status("Couldn't find the requested user.");
+                res.status(400).json("Couldn't find the requested user.");
             }
         }
     });

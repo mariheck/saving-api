@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
+const middleware = require('../middleware');
 const Photo = require('../models/photo');
 const Video = require('../models/video');
 const PhotoCollection = require('../models/photocollection');
@@ -30,7 +31,7 @@ router.get('/', (req, res) => {
 });
 
 // CREATE
-router.post('/', (req, res) => {
+router.post('/', middleware.isLoggedIn, (req, res) => {
     const { typeOfFile } = req.params;
 
     const File =
@@ -118,7 +119,7 @@ router.get('/:fileId', (req, res) => {
 });
 
 // UPDATE
-router.put('/:fileId', (req, res) => {
+router.put('/:fileId', middleware.isLoggedIn, (req, res) => {
     const { typeOfFile, fileId } = req.params;
 
     const File =
@@ -210,7 +211,7 @@ router.put('/:fileId', (req, res) => {
 });
 
 // DESTROY
-router.delete('/:fileId', (req, res) => {
+router.delete('/:fileId', middleware.isLoggedIn, (req, res) => {
     const { typeOfFile, fileId } = req.params;
 
     const File =
