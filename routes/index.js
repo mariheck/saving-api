@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const nodemailer = require('nodemailer');
+const passport = require('passport');
+const Admin = require('../models/admin');
 
 // ======================================================
 // NODEMAILER SETTING
@@ -48,18 +50,82 @@ router.post('/contact', (req, res) => {
 // ADMIN ROUTES
 // ======================================================
 
+// router.post('/register', (req, res) => {
+//     const { username, password } = req.body;
+
+//     const newAdmin = new Admin({ username });
+
+//     Admin.register(newAdmin, password, err => {
+//         if (err) {
+//             res.status(400).json("Couldn't register.");
+//         } else {
+//             passport.authenticate('local')(req, res, () => {
+//                 res.json('Successful registration.');
+//             });
+//         }
+//     });
+// });
+
 router.post('/login', (req, res) => {
-    const { pseudo, password } = req.body;
+    const { username, password } = req.body;
 
-    if (!pseudo || !password) {
+    if (!username || !password) {
         return res.status(400).json('Wrong credentials.');
     }
 
-    if (pseudo === 'Admin' && password === 'mdp123') {
-        return res.json({ pseudo: 'Admin' });
-    } else {
-        return res.status(400).json('Wrong credentials.');
+    const admin = new Admin({
+        username,
+        password
+    });
+
+    req.login(admin, err => {
+        if (err) {
+            res.status(400).json('Wrong credentials.');
+        } else {
+            passport.authenticate('local')(req, res, () => {
+                res.json(req.user.username);
+            });
+        }
+    });
+});
+
+router.get('/logout', (req, res) => {
+    req.logout();
+    res.json('Successfully logged out.');
+});
+
+router.put('/password', (req, res) => {
+    const {
+        username,
+        oldPassword,
+        newPassword,
+        passwordConfirmation
+    } = req.body;
+
+    if (newPassword !== passwordConfirmation) {
+        console.log('newPassword !== passwordConfirmation');
+        return res
+            .status(400)
+            .json('Password confirmation different from new password.');
     }
+
+    Admin.findByUsername(username, (err, admin) => {
+        if (err) {
+            res.status(400).status("Couldn't find the requested user.");
+        } else {
+            if (admin) {
+                admin.changePassword(oldPassword, newPassword, error => {
+                    if (error) {
+                        res.status(400).status("Couldn't update the password.");
+                    } else {
+                        res.json('Password updated successfully.');
+                    }
+                });
+            } else {
+                res.status(400).status("Couldn't find the requested user.");
+            }
+        }
+    });
 });
 
 module.exports = router;

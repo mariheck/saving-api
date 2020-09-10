@@ -42,10 +42,11 @@ router.post('/', (req, res) => {
             : null;
 
     const { entry } = req.body;
-    const newCollection = {
+
+    const newCollection = new Collection({
         name: _.startCase(_.toLower(_.trim(entry))),
         tag: _.kebabCase(_.toLower(_.trim(entry)))
-    };
+    });
 
     Collection.create(newCollection, err => {
         if (err) {
@@ -90,6 +91,7 @@ router.put('/:collectionTag', (req, res) => {
             : null;
 
     const { entry } = req.body;
+
     const updatedCollection = {
         name: _.startCase(_.toLower(_.trim(entry))),
         tag: _.kebabCase(_.toLower(_.trim(entry)))

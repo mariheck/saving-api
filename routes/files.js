@@ -4,7 +4,6 @@ const Photo = require('../models/photo');
 const Video = require('../models/video');
 const PhotoCollection = require('../models/photocollection');
 const VideoCollection = require('../models/videocollection');
-const { collection } = require('../models/photocollection');
 
 // ======================================================
 // FILES ROUTES
@@ -49,10 +48,11 @@ router.post('/', (req, res) => {
             : null;
 
     const { fileUrl, fileCollections } = req.body;
-    const newFile = {
+
+    const newFile = new File({
         src: fileUrl,
         collections: []
-    };
+    });
 
     Collection.find({ tag: { $in: fileCollections } }, (err, collections) => {
         if (err) {
@@ -136,6 +136,7 @@ router.put('/:fileId', (req, res) => {
             : null;
 
     const { fileUrl, fileCollections } = req.body;
+
     const updatedFile = {
         src: fileUrl,
         collections: []

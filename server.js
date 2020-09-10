@@ -3,6 +3,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const session = require('express-session');
+const passport = require('passport');
+
+const Admin = require('./models/admin');
 
 const indexRoutes = require('./routes/index');
 const collectionsRoutes = require('./routes/collections');
@@ -17,10 +21,30 @@ app.use(cors());
 // ======================================================
 
 mongoose.set('useUnifiedTopology', true);
+mongoose.set('useCreateIndex', true);
 mongoose.connect('mongodb://localhost:27017/savingDatabase', {
     useNewUrlParser: true,
     useFindAndModify: false
 });
+
+// ======================================================
+// PASSPORT CONFIGURATION
+// ======================================================
+
+app.use(
+    session({
+        secret: process.env.SECRET,
+        resave: false,
+        saveUninitialized: false
+    })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(Admin.createStrategy());
+passport.serializeUser(Admin.serializeUser());
+passport.deserializeUser(Admin.deserializeUser());
 
 // ======================================================
 // ROUTES
