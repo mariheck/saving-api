@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 
 const videoSchema = new mongoose.Schema({
     src: String,
+    name: String,
     collections: [
         {
             type: mongoose.Schema.Types.ObjectId,

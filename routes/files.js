@@ -48,10 +48,11 @@ router.post('/', middleware.isLoggedIn, (req, res) => {
             ? VideoCollection
             : null;
 
-    const { fileUrl, fileCollections } = req.body;
+    const { fileUrl, fileName, fileCollections } = req.body;
 
     const newFile = new File({
         src: fileUrl,
+        name: fileName,
         collections: []
     });
 
@@ -149,10 +150,11 @@ router.put('/:fileId', middleware.isLoggedIn, (req, res) => {
             ? VideoCollection
             : null;
 
-    const { fileUrl, fileCollections } = req.body;
+    const { fileUrl, fileName, fileCollections } = req.body;
 
     const updatedFile = {
         src: fileUrl,
+        name: fileName,
         collections: []
     };
 
