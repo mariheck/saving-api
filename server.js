@@ -22,7 +22,7 @@ app.use(cors({ origin: 'http://localhost:3001', credentials: true }));
 
 mongoose.set('useUnifiedTopology', true);
 mongoose.set('useCreateIndex', true);
-mongoose.connect('mongodb://localhost:27017/savingDatabase', {
+mongoose.connect(process.env.DATABASE_URL, {
     useNewUrlParser: true,
     useFindAndModify: false
 });
