@@ -1,8 +1,10 @@
-let middlewareObj = {};
+//======================================================
+// MIDDLEWARE ADMIN LOGGED IN
+//======================================================
 
-middlewareObj.isLoggedIn = (req, res, next) => {
+isLoggedIn = (req, res, next) => {
     if (req.isAuthenticated()) return next();
     return res.status(400).json('Access is restricted to admin.');
 };
 
-module.exports = middlewareObj;
+module.exports = { isLoggedIn };

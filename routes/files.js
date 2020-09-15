@@ -6,6 +6,26 @@ const Video = require('../models/video');
 const PhotoCollection = require('../models/photocollection');
 const VideoCollection = require('../models/videocollection');
 
+const pickFile = typeOfFile => {
+    if (typeOfFile === 'photos') {
+        return Photo;
+    } else if (typeOfFile === 'videos') {
+        return Video;
+    } else {
+        return null;
+    }
+};
+
+const pickCollection = typeOfFile => {
+    if (typeOfFile === 'photos') {
+        return PhotoCollection;
+    } else if (typeOfFile === 'videos') {
+        return VideoCollection;
+    } else {
+        return null;
+    }
+};
+
 // ======================================================
 // FILES ROUTES
 // ======================================================
@@ -13,13 +33,7 @@ const VideoCollection = require('../models/videocollection');
 // INDEX
 router.get('/', (req, res) => {
     const { typeOfFile } = req.params;
-
-    const File =
-        typeOfFile === 'photos'
-            ? Photo
-            : typeOfFile === 'videos'
-            ? Video
-            : null;
+    const File = pickFile(typeOfFile);
 
     File.find({}, (err, files) => {
         if (err) {
@@ -33,22 +47,9 @@ router.get('/', (req, res) => {
 // CREATE
 router.post('/', middleware.isLoggedIn, (req, res) => {
     const { typeOfFile } = req.params;
-
-    const File =
-        typeOfFile === 'photos'
-            ? Photo
-            : typeOfFile === 'videos'
-            ? Video
-            : null;
-
-    const Collection =
-        typeOfFile === 'photos'
-            ? PhotoCollection
-            : typeOfFile === 'videos'
-            ? VideoCollection
-            : null;
-
     const { fileUrl, fileName, fileCollections } = req.body;
+    const File = pickFile(typeOfFile);
+    const Collection = pickCollection(typeOfFile);
 
     const newFile = new File({
         src: fileUrl,
@@ -64,10 +65,10 @@ router.post('/', middleware.isLoggedIn, (req, res) => {
                     'Error finding the requested collections.'
                 );
             } else if (collections) {
-                const fileCollectionId = collections.map(
+                const fileCollectionsId = collections.map(
                     collection => collection._id
                 );
-                newFile.collections = [...fileCollectionId];
+                newFile.collections = [...fileCollectionsId];
 
                 File.create(newFile, (createError, file) => {
                     if (createError) {
@@ -113,13 +114,7 @@ router.post('/', middleware.isLoggedIn, (req, res) => {
 // SHOW
 router.get('/:fileId', (req, res) => {
     const { typeOfFile, fileId } = req.params;
-
-    const File =
-        typeOfFile === 'photos'
-            ? Photo
-            : typeOfFile === 'videos'
-            ? Video
-            : null;
+    const File = pickFile(typeOfFile);
 
     File.findById(fileId, (err, file) => {
         if (err) {
@@ -135,22 +130,9 @@ router.get('/:fileId', (req, res) => {
 // UPDATE
 router.put('/:fileId', middleware.isLoggedIn, (req, res) => {
     const { typeOfFile, fileId } = req.params;
-
-    const File =
-        typeOfFile === 'photos'
-            ? Photo
-            : typeOfFile === 'videos'
-            ? Video
-            : null;
-
-    const Collection =
-        typeOfFile === 'photos'
-            ? PhotoCollection
-            : typeOfFile === 'videos'
-            ? VideoCollection
-            : null;
-
     const { fileUrl, fileName, fileCollections } = req.body;
+    const File = pickFile(typeOfFile);
+    const Collection = pickCollection(typeOfFile);
 
     const updatedFile = {
         src: fileUrl,
@@ -274,20 +256,8 @@ router.put('/:fileId', middleware.isLoggedIn, (req, res) => {
 // DESTROY
 router.delete('/:fileId', middleware.isLoggedIn, (req, res) => {
     const { typeOfFile, fileId } = req.params;
-
-    const File =
-        typeOfFile === 'photos'
-            ? Photo
-            : typeOfFile === 'videos'
-            ? Video
-            : null;
-
-    const Collection =
-        typeOfFile === 'photos'
-            ? PhotoCollection
-            : typeOfFile === 'videos'
-            ? VideoCollection
-            : null;
+    const File = pickFile(typeOfFile);
+    const Collection = pickCollection(typeOfFile);
 
     File.findByIdAndRemove(fileId, (removeError, file) => {
         if (removeError) {

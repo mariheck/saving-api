@@ -72,7 +72,7 @@ router.post('/login', (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json('Wrong credentials.');
+        return res.status(400).json('Missing credentials.');
     }
 
     const admin = new Admin({
@@ -107,7 +107,7 @@ router.put('/password', middleware.isLoggedIn, (req, res) => {
 
     Admin.findByUsername(username, (err, admin) => {
         if (err) {
-            res.status(400).json("Couldn't find the requested user.");
+            res.status(400).json("Couldn't find the requested admin.");
         } else {
             if (admin) {
                 admin.changePassword(
@@ -134,7 +134,7 @@ router.put('/password', middleware.isLoggedIn, (req, res) => {
 // FIREBASE ROUTES
 // ======================================================
 
-router.get('/firebase-config', middleware.isLoggedIn, (req, res) => {
+router.get('/firebase-config', (req, res) => {
     const firebaseConfig = {
         apiKey: process.env.FIREBASE_API_KEY,
         authDomain: process.env.FIREBASE_AUTH_DOMAIN,
