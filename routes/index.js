@@ -1,9 +1,10 @@
-require('dotenv').config();
-
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const nodemailer = require('nodemailer');
-const middleware = require('../middleware');
+const { isLoggedIn } = require('../middleware');
+
+if (process.env.NODE_ENV !== 'production') require('dotenv').config();
+
 const Admin = require('../models/admin');
 
 // ======================================================
@@ -22,7 +23,7 @@ const transporter = nodemailer.createTransport({
 // NODEMAILER ROUTE
 // ======================================================
 
-router.post('/contact', (req, res) => {
+router.post('/message', (req, res) => {
     const { name, email, phone, message } = req.body;
 
     const mailContent = `
@@ -52,22 +53,6 @@ router.post('/contact', (req, res) => {
 // ADMIN ROUTES
 // ======================================================
 
-// router.post('/register', (req, res) => {
-//     const { username, password } = req.body;
-
-//     const newAdmin = new Admin({ username });
-
-//     Admin.register(newAdmin, password, err => {
-//         if (err) {
-//             res.status(400).json("Couldn't register.");
-//         } else {
-//             passport.authenticate('local')(req, res, () => {
-//                 res.json('Successful registration.');
-//             });
-//         }
-//     });
-// });
-
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
 
@@ -91,7 +76,7 @@ router.get('/logout', (req, res) => {
     res.json('Successfully logged out.');
 });
 
-router.put('/password', middleware.isLoggedIn, (req, res) => {
+router.put('/password', isLoggedIn, (req, res) => {
     const {
         username,
         oldPassword,

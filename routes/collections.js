@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const _ = require('lodash');
-const middleware = require('../middleware');
+const { isLoggedIn } = require('../middleware');
 const PhotoCollection = require('../models/photocollection');
 const VideoCollection = require('../models/videocollection');
 
@@ -38,7 +38,7 @@ router.get('/', (req, res) => {
 });
 
 // CREATE
-router.post('/', middleware.isLoggedIn, (req, res) => {
+router.post('/', isLoggedIn, (req, res) => {
     const { typeOfFile } = req.params;
     const { entry } = req.body;
     const Collection = pickCollection(typeOfFile);
@@ -76,7 +76,7 @@ router.get('/:collectionTag', (req, res) => {
 });
 
 // UPDATE
-router.put('/:collectionTag', middleware.isLoggedIn, (req, res) => {
+router.put('/:collectionTag', isLoggedIn, (req, res) => {
     const { typeOfFile, collectionTag } = req.params;
     const { entry } = req.body;
     const Collection = pickCollection(typeOfFile);
@@ -102,7 +102,7 @@ router.put('/:collectionTag', middleware.isLoggedIn, (req, res) => {
 });
 
 // DESTR0Y
-router.delete('/:collectionTag', middleware.isLoggedIn, (req, res) => {
+router.delete('/:collectionTag', isLoggedIn, (req, res) => {
     const { typeOfFile, collectionTag } = req.params;
     const Collection = pickCollection(typeOfFile);
 

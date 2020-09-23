@@ -1,10 +1,10 @@
-require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const passport = require('passport');
+
+if (process.env.NODE_ENV !== 'production') require('dotenv').config();
 
 const Admin = require('./models/admin');
 

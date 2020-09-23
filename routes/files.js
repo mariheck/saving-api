@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const middleware = require('../middleware');
+const { isLoggedIn } = require('../middleware');
 const Photo = require('../models/photo');
 const Video = require('../models/video');
 const PhotoCollection = require('../models/photocollection');
@@ -45,7 +45,7 @@ router.get('/', (req, res) => {
 });
 
 // CREATE
-router.post('/', middleware.isLoggedIn, (req, res) => {
+router.post('/', isLoggedIn, (req, res) => {
     const { typeOfFile } = req.params;
     const { fileUrl, fileName, fileCollections } = req.body;
     const File = pickFile(typeOfFile);
@@ -111,6 +111,36 @@ router.post('/', middleware.isLoggedIn, (req, res) => {
     );
 });
 
+// SHOW MANY
+router.get('/collection/:collectionTag', (req, res) => {
+    const { typeOfFile, collectionTag } = req.params;
+    const File = pickFile(typeOfFile);
+    const Collection = pickCollection(typeOfFile);
+
+    Collection.findOne({ tag: collectionTag }, (err, collection) => {
+        if (err) {
+            res.status(400).json('Error fetching the requested collection.');
+        } else if (collection) {
+            File.find(
+                { _id: { $in: collection[typeOfFile] } },
+                (err, files) => {
+                    if (err) {
+                        res.status(400).status(
+                            'Error fetching the requested files.'
+                        );
+                    } else if (files) {
+                        res.json(files);
+                    } else {
+                        res.status(400).status("Requested files don't exist.");
+                    }
+                }
+            );
+        } else {
+            res.status(400).json("Collection doesn't exist.");
+        }
+    });
+});
+
 // SHOW
 router.get('/:fileId', (req, res) => {
     const { typeOfFile, fileId } = req.params;
@@ -128,7 +158,7 @@ router.get('/:fileId', (req, res) => {
 });
 
 // UPDATE
-router.put('/:fileId', middleware.isLoggedIn, (req, res) => {
+router.put('/:fileId', isLoggedIn, (req, res) => {
     const { typeOfFile, fileId } = req.params;
     const { fileUrl, fileName, fileCollections } = req.body;
     const File = pickFile(typeOfFile);
@@ -254,7 +284,7 @@ router.put('/:fileId', middleware.isLoggedIn, (req, res) => {
 });
 
 // DESTROY
-router.delete('/:fileId', middleware.isLoggedIn, (req, res) => {
+router.delete('/:fileId', isLoggedIn, (req, res) => {
     const { typeOfFile, fileId } = req.params;
     const File = pickFile(typeOfFile);
     const Collection = pickCollection(typeOfFile);
