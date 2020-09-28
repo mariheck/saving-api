@@ -52,7 +52,7 @@ passport.deserializeUser(Admin.deserializeUser());
 
 app.use('/', indexRoutes);
 app.use('/collections/:typeOfFile', collectionsRoutes);
-app.use('/:typeOfFile', filesRoutes);
+app.use('/files/:typeOfFile', filesRoutes);
 
 // ======================================================
 // APP RUNNING
